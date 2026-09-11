@@ -1,31 +1,32 @@
 # Meal Planner
 
-A full-stack meal planning app using the Edamam Meal Planner API. Users can generate personalized meal plans based on dietary preferences and nutritional goals.
+A full-stack meal planning app that generates personalized weekly meal plans using the Edamam Meal Planner API, with user authentication and plan caching via Supabase.
 
-## What It Does
+## Features
 
-- Generates weekly meal plans using the Edamam Meal Planner API
-- Provides detailed recipes and nutritional information for each meal
-- Caches generated meal plans in a Supabase database to avoid redundant API calls
-- Supports user authentication and personalized meal plans via Supabase Auth
+- Generate weekly meal plans based on dietary preferences and nutritional goals
+- Detailed recipes and nutritional info for each meal
+- User authentication via Supabase Auth
+- Cached meal plans to avoid redundant API calls
 
-## How to Run It
+## Prerequisites
 
-### Prerequisites
+- Node.js v18+
+- A [Supabase](https://supabase.com) project (database + auth)
+- An [Edamam](https://developer.edamam.com) API key
 
-- Node.js (v18+)
-- npm or yarn
-- A Supabase project (for database and auth)
-- An Edamam API key (for meal plan generation)
+## Quick Start
 
-### Backend (Server)
+### 1. Install dependencies
 
 ```bash
-cd server
-npm install
+cd client && npm install
+cd ../server && npm install
 ```
 
-Create a `.env` file in the `server/` directory:
+### 2. Configure environment
+
+Create `server/.env`:
 
 ```env
 PORT=3001
@@ -36,45 +37,33 @@ EDAMAM_APP_KEY=your_edamam_app_key
 CLIENT_URL=http://localhost:5173
 ```
 
-```bash
-npm run dev
-```
-
-The server runs on `http://localhost:3001` by default.
-
-### Frontend (Client)
+### 3. Run
 
 ```bash
-cd client
-npm install
+# Terminal 1 — backend
+cd server && npm run dev
+
+# Terminal 2 — frontend
+cd client && npm run dev
 ```
 
-```bash
-npm run dev
-```
-
-The client runs on `http://localhost:5173` by default.
+Open [http://localhost:5173](http://localhost:5173).
 
 ## Architecture
 
-```
-client/                # React frontend (Vite)
-  src/
-    App.jsx            # Main app component
-    main.jsx           # Entry point
-    index.css          # Tailwind CSS styles
-
-server/                # Express backend
-  src/
-    index.js           # Server entry point, middleware setup, health check
-```
-
-- **Frontend**: React 19 + Tailwind CSS 4, built with Vite. Uses React Router for navigation and the Supabase JS client for auth/data.
-- **Backend**: Express 5 API server with CORS configured for the frontend origin. Connects to Supabase for persistence and calls the Edamam API for meal plan generation.
-- **Database**: Supabase (PostgreSQL) — stores meal plans per user to cache API responses.
+| Layer | Tech | Details |
+|-------|------|---------|
+| Frontend | React 19, Vite 8, Tailwind 4 | SPA with React Router, Supabase JS client for auth |
+| Backend | Express 5 | REST API, CORS for frontend origin |
+| Database | Supabase (PostgreSQL) | Stores meal plans per user |
+| External API | Edamam Meal Planner | Generates meal plans server-side |
 
 ## API Endpoints
 
 | Method | Endpoint  | Description |
-| ------ | --------- | ----------- |
-| GET    | `/health` | Health check (returns `{ status: "Okay!" }`) |
+|--------|-----------|-------------|
+| GET    | `/health` | Health check — returns `{ status: "Okay!" }` |
+
+## License
+
+ISC
