@@ -6,7 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-
+// Define the port the server will listen on
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({
@@ -15,6 +15,7 @@ app.use(cors({
 
 app.use(express.json()); // Middleware to parse JSON request bodies
 
+// Health check endpoint to verify that the server is running
 app.get('/health', (req, res) => {
     res.json({ status: "Okay!"});
 });

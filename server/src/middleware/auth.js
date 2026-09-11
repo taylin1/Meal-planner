@@ -31,7 +31,7 @@ async function verifyToken(req, res, next) {
     // Supabase checks the token's signature — only Supabase
     // knows the secret used to create it so it can't be faked
     const { data: { user }, error } = await supabase.auth.getUser(token)
-    console.log(data);
+    
     // If Supabase says the token is invalid or expired
     // reject the request with a 401
     // The route handler never runs
