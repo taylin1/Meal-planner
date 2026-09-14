@@ -31,7 +31,7 @@ Create `server/.env`:
 ```env
 PORT=3001
 SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 EDAMAM_APP_ID=your_edamam_app_id
 EDAMAM_APP_KEY=your_edamam_app_key
 CLIENT_URL=http://localhost:5173
@@ -60,9 +60,14 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## API Endpoints
 
-| Method | Endpoint  | Description |
-|--------|-----------|-------------|
-| GET    | `/health` | Health check — returns `{ status: "Okay!" }` |
+| Method | Endpoint        | Description |
+|--------|-----------------|-------------|
+| GET    | `/health`       | Health check — returns `{ status: "Okay!" }` |
+| POST   | `/api/meal-plans` | Generate a weekly meal plan (requires auth) |
+
+## Authentication
+
+The `/api/meal-plans` endpoint requires a valid Supabase JWT in the `Authorization: Bearer <token>` header.
 
 ## License
 

@@ -38,7 +38,8 @@ server/src/
     supabaseClient.js     # Supabase client init
   middleware/
     auth.js               # Auth middleware
-  routes/                 # Route handlers (empty — inline in index.js)
+  routes/
+    mealplans.js          # POST /api/meal-plans — generate + cache meal plans
 ```
 
 ## Conventions
@@ -54,7 +55,7 @@ server/src/
 ```
 PORT=3001
 SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 EDAMAM_APP_ID=your_edamam_app_id
 EDAMAM_APP_KEY=your_edamam_app_key
 CLIENT_URL=http://localhost:5173
@@ -66,5 +67,6 @@ CLIENT_URL=http://localhost:5173
 - Edamam API calls are **server-side only** — never expose API keys to the client
 - Meal plans are **cached in Supabase** to avoid redundant API calls
 - **No client tests yet** — only server has Jest configured
+- **Supabase service role key** — `SUPABASE_SERVICE_ROLE_KEY` bypasses Row Level Security; the server has full admin access to the database
 - `.env` is gitignored — never commit secrets
 - No root `package.json` — `npm install` must be run in `client/` and `server/` separately
