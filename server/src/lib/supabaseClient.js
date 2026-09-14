@@ -1,5 +1,5 @@
 // Load the Supabase client library
-const { createClient } = require('@supabase/supabase-js')
+const { createClient } = require('@supabase/supabase-js');
 
 // Read credentials from .env file
 // These are available because index.js calls require('dotenv').config()
@@ -8,8 +8,6 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // Guard clause — if either variable is missing
 // throw a clear error immediately on startup
-// rather than crashing later with a confusing message
-
 if (!supabaseUrl || !supabaseServiceRoleKey) {
   throw new Error(
     'Missing Supabase environment variables. Check your server/.env file.'
