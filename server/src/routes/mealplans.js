@@ -11,6 +11,62 @@ const EDAMAM_APP_KEY = process.env.EDAMAM_APP_KEY
 // so every request uses the same value regardless of who's logged in
 const EDAMAM_USER_ID = 'meal-planner-app-user'
 
+
+// Takes the raw selection data from Edamam's /select response
+// and fetches full recipe details for every assigned recipe URI
+async function attachRecipeDetails(selectData) {
+  const days = selectData.selection
+
+  // Collect every unique recipe lookup URL across all days/meals
+  // so we don't call the same recipe twice if it repeats
+  const uniqueUrls = new Set()
+
+  days.forEach(function (day) {
+    Object.values(day.sections).forEach(function (section) {
+      uniqueUrls.add(section._links.self.href)
+    })
+  })
+
+  // Fetch details for every unique recipe, in parallel
+  const recipeDetailsByUrl = {}
+
+  await Promise.all(
+    Array.from(uniqueUrls).map(async function (url) {
+      const response = await fetch(url, {
+        headers: {
+          'Edamam-Account-User': EDAMAM_USER_ID,
+          'Authorization': 'Basic ' + Buffer.from(`${EDAMAM_APP_ID}:${EDAMAM_APP_KEY}`).toString('base64')
+        }
+      })
+
+      const data = await response.json()
+      recipeDetailsByUrl[url] = data.recipe
+    })
+  )
+
+  // Replace each section's URI reference with the actual recipe details
+  const daysWithRecipes = days.map(function (day) {
+    const sectionsWithRecipes = {}
+
+    Object.entries(day.sections).forEach(function ([mealName, section]) {
+      const recipe = recipeDetailsByUrl[section._links.self.href]
+
+      sectionsWithRecipes[mealName] = {
+        label: recipe.label,
+        image: recipe.image,
+        calories: Math.round(recipe.calories),
+        ingredientLines: recipe.ingredientLines,
+        url: recipe.url
+      }
+    })
+
+    return { sections: sectionsWithRecipes }
+  })
+
+  return daysWithRecipes
+}
+
+
 router.post('/', verifyToken, async function(req,res){
 
     //Step 1 -Recieve days, meals and healthLabels form React
