@@ -1,119 +1,106 @@
-const express = require ('express');
-const router = express.Router();
-const supabase = require('../lib/supabaseClient.js');
-const {verifyToken} = require ('../middleware/auth.js')
-const {buildMealPlanRequest} = require('../lib/mealPlanBuilder.js');
+const express = require('express')
+const router = express.Router()
+const supabase = require('../lib/supabaseClient.js')
+const { verifyToken } = require('../middleware/auth.js')
+const { buildMealPlanRequest } = require('../lib/mealPlanBuilder.js')
 
 const EDAMAM_APP_ID = process.env.EDAMAM_APP_ID
 const EDAMAM_APP_KEY = process.env.EDAMAM_APP_KEY
 
-// Fixed shared user_id — the free plan only allows 10 account users/month
-// so every request uses the same value regardless of who's logged in
+// Free plan only allows 10 account users/month, so every request shares one id
 const EDAMAM_USER_ID = 'meal-planner-app-user'
 
+// Built once, reused for every Edamam call
+const EDAMAM_AUTH = 'Basic ' + Buffer.from(`${EDAMAM_APP_ID}:${EDAMAM_APP_KEY}`).toString('base64')
 
-// Takes the raw selection data from Edamam's /select response
-// and fetches full recipe details for every assigned recipe URI
-async function attachRecipeDetails(selectData) {
-  const days = selectData.selection
-
-  // Collect every unique recipe lookup URL across all days/meals
-  // so we don't call the same recipe twice if it repeats
-  const uniqueUrls = new Set()
-
-  days.forEach(function (day) {
-    Object.values(day.sections).forEach(function (section) {
-      uniqueUrls.add(section._links.self.href)
-    })
+// Goes to one recipe link and returns the real recipe
+async function getRecipe(link) {
+  const response = await fetch(link, {
+    headers: {
+      'Edamam-Account-User': EDAMAM_USER_ID,
+      'Authorization': EDAMAM_AUTH
+    }
   })
 
-  // Fetch details for every unique recipe, in parallel
-  const recipeDetailsByUrl = {}
+  const data = await response.json()
+  return data.recipe
+}
 
-  await Promise.all(
-    Array.from(uniqueUrls).map(async function (url) {
-      const response = await fetch(url, {
-        headers: {
-          'Edamam-Account-User': EDAMAM_USER_ID,
-          'Authorization': 'Basic ' + Buffer.from(`${EDAMAM_APP_ID}:${EDAMAM_APP_KEY}`).toString('base64')
-        }
-      })
+// Swaps every recipe link in the plan for the real recipe
+async function attachRecipeDetails(selectData) {
+  const finishedDays = []
 
-      const data = await response.json()
-      recipeDetailsByUrl[url] = data.recipe
-    })
-  )
+  for (const day of selectData.selection) {
+    const thisDaysMeals = {}
 
-  // Replace each section's URI reference with the actual recipe details
-  const daysWithRecipes = days.map(function (day) {
-    const sectionsWithRecipes = {}
+    for (const mealName in day.sections) {
+      const link = day.sections[mealName]._links.self.href
+      const recipe = await getRecipe(link)
+      
+       const servings = recipe.yield || 1
 
-    Object.entries(day.sections).forEach(function ([mealName, section]) {
-      const recipe = recipeDetailsByUrl[section._links.self.href]
-
-      sectionsWithRecipes[mealName] = {
+      thisDaysMeals[mealName] = {
         label: recipe.label,
         image: recipe.image,
-        calories: Math.round(recipe.calories),
+        calories: Math.round(recipe.calories/ servings),
         ingredientLines: recipe.ingredientLines,
         url: recipe.url
       }
-    })
+    }
 
-    return { sections: sectionsWithRecipes }
-  })
+    finishedDays.push({ sections: thisDaysMeals })
+  }
 
-  return daysWithRecipes
+  return finishedDays
 }
 
+router.post('/', verifyToken, async function (req, res) {
 
-router.post('/', verifyToken, async function(req,res){
+  // Step 1 - Receive days, meals and healthLabels from React
+  const { days, meals, healthLabels } = req.body
 
-    //Step 1 -Recieve days, meals and healthLabels form React
-    const {days, meals, healthLabels} = req.body;
-    
-    //Step 2 - Valdate the input
-    if(!days || !meals || meals.length === 0){
-        res.status(404).json({error: "days and atleast one meal are required"})
-    }
-    
-    // Step 3 — Build the Edamam request body (using our mealPlanBuilder)
-    const requestBody = buildMealPlanRequest({ days, meals, healthLabels: healthLabels || [] })
+  // Step 2 - Validate the input
+  if (!days || !meals || meals.length === 0) {
+    return res.status(400).json({ error: 'days and at least one meal are required' })
+  }
 
-    try {
+  // Step 3 - Build the Edamam request body
+  const requestBody = buildMealPlanRequest({ days, meals, healthLabels: healthLabels || [] })
 
-         console.log('APP_ID:', EDAMAM_APP_ID)
-         console.log('APP_KEY exists:', !!EDAMAM_APP_KEY)
+  try {
+    // Step 4 - Call Edamam's select endpoint
+    const selectResponse = await fetch(
+      `https://api.edamam.com/api/meal-planner/v1/${EDAMAM_APP_ID}/select`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Edamam-Account-User': EDAMAM_USER_ID,
+          'Authorization': EDAMAM_AUTH
+        },
+        body: JSON.stringify(requestBody)
+      }
+    )
 
-        //Step 4 - Call edamam endpoint/ select endpoint 
-        const selectResponse = await fetch(
-            `https://api.edamam.com/api/meal-planner/v1/${EDAMAM_APP_ID}/select`,
-            {
-                method:'POST',
-                headers:{
-                    'Content-Type':'application/json',
-                    'Edamam-Account-User': EDAMAM_USER_ID,
-                    'Authorization': 'Basic ' + Buffer.from(`${EDAMAM_APP_ID}:${EDAMAM_APP_KEY}`).toString('base64')
-                },
-                body: JSON.stringify(requestBody)
-            }
-        )
-         // Step 5 — Edamam returns recipe URIs assigned to each day/meal slot
+    // Step 5 - Edamam returns recipe links for each day/meal
     const selectData = await selectResponse.json()
+    
+    console.log('Select response:', JSON.stringify(selectData, null, 2))
 
     if (!selectResponse.ok) {
       console.error('Edamam select error:', selectData)
-      console.error('Edamam status:', selectResponse.status)
-      console.error('Edamam status text:', selectResponse.statusText)
       return res.status(502).json({ error: 'Failed to generate meal plan' })
     }
 
-    
-    // Step 6 — Look up full recipe details for each URI
-    // NOTE: not implemented yet — this happens in Phase 7
-    // For now selectData only contains recipe URIs, not full details
+        if (!selectData.selection || selectData.selection.length === 0) {
+      console.error('Edamam returned no plan:', selectData)
+      return res.status(422).json({ error: 'Could not build a plan with those choices. Try different options.' })
+    }
 
-    // Step 7 — Save the complete plan to Supabase
+    // Step 6 - Swap the links for the real recipes
+    const daysWithRecipes = await attachRecipeDetails(selectData)
+
+    // Step 7 - Save the complete plan to Supabase
     const { data: savedPlan, error: dbError } = await supabase
       .from('meal_plans')
       .insert({
@@ -121,7 +108,7 @@ router.post('/', verifyToken, async function(req,res){
         days,
         meals_included: meals,
         health_labels: healthLabels || [],
-        plan_data: selectData
+        plan_data: daysWithRecipes
       })
       .select()
       .single()
@@ -130,14 +117,13 @@ router.post('/', verifyToken, async function(req,res){
       return res.status(500).json({ error: 'Failed to save meal plan' })
     }
 
-    // Step 8 — Return the plan to React
+    // Step 8 - Return the plan to React
     return res.status(201).json(savedPlan)
 
   } catch (err) {
     console.error('Meal plan generation error:', err)
     return res.status(500).json({ error: 'Something went wrong generating your meal plan' })
   }
-
 })
 
-module.exports = router;
+module.exports = router

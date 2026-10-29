@@ -24,7 +24,9 @@ const MEAL_TYPES = {
 function buildMealPlanRequest({ days, meals, healthLabels }) {
 
   // Build each section dynamically based on which meals the user toggled on
-  const sections = {}
+   const sections = {}
+  let dailyMin = 0
+  let dailyMax = 0
 
   meals.forEach(function (meal) {
     sections[meal] = {
@@ -38,20 +40,21 @@ function buildMealPlanRequest({ days, meals, healthLabels }) {
         ENERC_KCAL: MEAL_CALORIES[meal]
       }
     }
+
+    dailyMin += MEAL_CALORIES[meal].min
+    dailyMax += MEAL_CALORIES[meal].max
   })
 
   const request = {
     size: days,
     plan: {
-      // Only include health labels if the user selected any —
-      // an empty array causes Edamam to reject the request
       ...(healthLabels.length > 0 && {
         accept: {
           all: [{ health: healthLabels }]
         }
       }),
       fit: {
-        ENERC_KCAL: { min: 1000, max: 2000 }
+        ENERC_KCAL: { min: dailyMin, max: dailyMax }
       },
       sections
     }
