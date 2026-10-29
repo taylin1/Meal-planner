@@ -7,6 +7,7 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 > is still a placeholder and per-recipe details are not expanded yet. See
 > [docs/Architecture.md](docs/Architecture.md) for what exists.
 
+
 ## Features
 
 | Feature | Status |
@@ -59,6 +60,10 @@ Open [http://localhost:5173](http://localhost:5173).
 |--------|----------|------|-------------|
 | GET | `/health` | none | Health check — returns `{ status: "Okay!" }` |
 | POST | `/api/meal-plans` | Bearer JWT | Generate a weekly meal plan and cache it |
+
+- `POST /api/meal-plans` - generate and save a meal plan (requires login)
+- `GET /api/meal-plans` - list the logged-in user's saved plans (requires login)
+
 
 ### Authentication
 

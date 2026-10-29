@@ -36,7 +36,7 @@ async function attachRecipeDetails(selectData) {
     for (const mealName in day.sections) {
       const link = day.sections[mealName]._links.self.href
       const recipe = await getRecipe(link)
-      
+
        const servings = recipe.yield || 1
 
       thisDaysMeals[mealName] = {
@@ -124,6 +124,22 @@ router.post('/', verifyToken, async function (req, res) {
     console.error('Meal plan generation error:', err)
     return res.status(500).json({ error: 'Something went wrong generating your meal plan' })
   }
+})
+
+// GET /api/meal-plans - returns the logged-in user's saved plans
+router.get('/', verifyToken, async function (req, res) {
+
+  const { data: plans, error } = await supabase
+    .from('meal_plans')
+    .select('*')
+    .eq('user_id', req.user.id)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    return res.status(500).json({ error: 'Failed to fetch meal plans' })
+  }
+
+  return res.status(200).json(plans)
 })
 
 module.exports = router
