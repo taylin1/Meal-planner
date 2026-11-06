@@ -75,10 +75,10 @@ inlines them into the bundle.
 
 ## Known Incomplete — do not assume these work
 
-- **No dashboard route.** After a successful login or sign-up, `LoginPage.jsx` /
-  `SignUpPage.jsx` navigate to `/dashboard`, but `client/src/App.jsx` only defines
-  `/`, `/login`, and `/signup` — so users land on a blank page. There is no plan
-  builder or plan display UI yet.
+- **Dashboard is a placeholder.** `App.jsx` now defines `/`, `/login`, `/signup`, and a
+  protected `/dashboard`. `LoginPage.jsx` / `SignUpPage.jsx` navigate to
+  `/dashboard`, but `Dashboard.jsx` only renders "Welcome to the dashboard" — the
+  plan builder and plan display UI are not built yet.
 - **`attachRecipeDetails()` fetches sequentially.** It awaits each recipe link one at a
   time inside nested loops, so a full week costs ~20+ serial HTTP calls to Edamam.
 - Per-meal calorie ranges and dish/meal-type filters are fixed defaults in

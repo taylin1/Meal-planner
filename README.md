@@ -18,6 +18,7 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 | Meal plans cached in Supabase | ✅ working |
 | Full recipe details per meal (label, image, calories, ingredients) | ✅ working |
 | Client auth UI (sign up / log in) | ✅ working |
+| Client login/sign-up styling per docs/design.md + design-reference.png | ✅ working |
 | Client plan builder + plan display | 🚧 not implemented |
 
 ## Prerequisites
@@ -74,6 +75,12 @@ Open [http://localhost:5173](http://localhost:5173).
 | POST | `/api/meal-plans` | Bearer JWT | Generate a weekly meal plan, expand recipe details, and cache it |
 | GET | `/api/meal-plans` | Bearer JWT | List the logged-in user's saved plans |
 
+### Usage notes
+
+- `App.jsx` now renders `/`, `/login`, and `/signup`, and adds a protected `/dashboard` route.
+- After a successful login or sign-up, `LoginPage.jsx` / `SignUpPage.jsx` navigate to `/dashboard`.
+- The `/dashboard` route currently renders a placeholder; a real plan builder and plan
+  display are not built yet.
 
 ### Authentication
 
