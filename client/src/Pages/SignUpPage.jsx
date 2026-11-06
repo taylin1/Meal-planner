@@ -37,23 +37,23 @@ function SignUpPage (){
 
     return(
        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Create an account</h1>
-        <p className="text-gray-500 text-sm mb-6">Sign up to plan your meals</p>
+      <div className="w-full max-w-lg bg-white rounded-3xl p-10 shadow-sm">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Create an account</h1>
+        <p className="text-gray-500 text-base mb-8">Sign up to plan your meals</p>
 
         {errorMessage && (
-          <div className="bg-red-50 text-red-500 text-sm rounded-2xl px-4 py-3 mb-6">
+          <div className="bg-red-50 text-red-500 text-base rounded-2xl px-5 py-4 mb-8">
             {errorMessage}
           </div>
         )}
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           <input
             type="email"
             placeholder="you@example.com"
             value={email}
             onChange={handleEmailChange}
-            className="w-full bg-gray-100 text-gray-900 rounded-full px-5 py-3 text-sm outline-none placeholder:text-gray-500 focus:ring-2 focus:ring-orange-500"
+            className="w-full bg-gray-100 text-gray-900 rounded-full px-6 py-4 text-base outline-none placeholder:text-gray-500 focus:ring-2 focus:ring-orange-500"
           />
 
           <input
@@ -61,19 +61,19 @@ function SignUpPage (){
             placeholder="Min. 6 characters"
             value={password}
             onChange={handlePasswordChange}
-            className="w-full bg-gray-100 text-gray-900 rounded-full px-5 py-3 text-sm outline-none placeholder:text-gray-500 focus:ring-2 focus:ring-orange-500"
+            className="w-full bg-gray-100 text-gray-900 rounded-full px-6 py-4 text-base outline-none placeholder:text-gray-500 focus:ring-2 focus:ring-orange-500"
           />
 
           <button
             onClick={handleSignup}
             disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full py-3 text-sm disabled:opacity-50"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full py-4 text-base disabled:opacity-50"
           >
             {loading ? 'Creating account...' : 'Sign up'}
           </button>
         </div>
 
-        <p className="text-gray-500 text-sm text-center mt-6">
+        <p className="text-gray-500 text-base text-center mt-8">
           Already have an account?{' '}
           <Link to="/login" className="text-orange-500 hover:text-orange-600 font-medium">Log in</Link>
         </p>
