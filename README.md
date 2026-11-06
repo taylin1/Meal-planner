@@ -19,6 +19,7 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 | Full recipe details per meal (label, image, calories, ingredients) | ✅ working |
 | Client auth UI (sign up / log in) | ✅ working |
 | Client login/sign-up styling per docs/design.md + design-reference.png | ✅ working |
+| Dashboard navbar (logo, user name/email, log out) | ✅ working |
 | Client plan builder + plan display | 🚧 not implemented |
 
 ## Prerequisites
@@ -77,10 +78,13 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ### Usage notes
 
-- `App.jsx` now renders `/`, `/login`, and `/signup`, and adds a protected `/dashboard` route.
-- After a successful login or sign-up, `LoginPage.jsx` / `SignUpPage.jsx` navigate to `/dashboard`.
-- The `/dashboard` route currently renders a placeholder; a real plan builder and plan
-  display are not built yet.
+- Routes: `/` redirects to `/login`; `/login` and `/signup` are public; `/dashboard` is
+  protected by `ProtectedRoute` (verified Supabase session).
+- After a successful login, `LoginPage.jsx` navigates to `/dashboard`; `SignUpPage.jsx`
+  sends the user to `/login`.
+- `/dashboard` renders the navbar (logo, user name/email, log out) plus a placeholder
+  welcome line; a real plan builder and plan display are not built yet.
+- Logging out from the navbar calls `supabase.auth.signOut()` and returns to `/login`.
 
 ### Authentication
 
