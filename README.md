@@ -3,8 +3,9 @@
 A full-stack meal planning app that generates weekly meal plans with the Edamam Meal
 Planner API, protected by Supabase-authenticated requests and cached in Supabase.
 
-> **Status — backend first.** `POST /api/meal-plans` works end to end. The React client
-> is still a placeholder and per-recipe details are not expanded yet. See
+> **Status — backend + auth UI.** `POST /api/meal-plans` works end to end and expands
+> each meal into full recipe details before saving. The client has sign-up and log-in
+> screens; the plan builder and plan display are not built yet. See
 > [docs/Architecture.md](docs/Architecture.md) for what exists.
 
 
@@ -15,8 +16,9 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 | Weekly plan generation (days, meals, health labels) | ✅ working |
 | JWT-protected API | ✅ working |
 | Meal plans cached in Supabase | ✅ working |
-| Full recipe + nutrition details per meal | 🚧 not implemented |
-| Client UI (auth, plan builder, plan display) | 🚧 placeholder |
+| Full recipe details per meal (label, image, calories, ingredients) | ✅ working |
+| Client auth UI (sign up / log in) | ✅ working |
+| Client plan builder + plan display | 🚧 not implemented |
 
 ## Prerequisites
 
@@ -42,6 +44,16 @@ cp server/.env.example server/.env
 Then fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `EDAMAM_APP_ID`, and
 `EDAMAM_APP_KEY`. See the comments in `.env.example` for where each value comes from.
 
+The client also needs its own Supabase browser credentials — copy the template:
+
+```bash
+cp client/.env.example client/.env
+```
+
+and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (Supabase → Project
+Settings → API). Both are public values that ship in the browser bundle; never put the
+service role key or Edamam credentials in a `VITE_` variable.
+
 ### 3. Run
 
 ```bash
@@ -59,10 +71,8 @@ Open [http://localhost:5173](http://localhost:5173).
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/health` | none | Health check — returns `{ status: "Okay!" }` |
-| POST | `/api/meal-plans` | Bearer JWT | Generate a weekly meal plan and cache it |
-
-- `POST /api/meal-plans` - generate and save a meal plan (requires login)
-- `GET /api/meal-plans` - list the logged-in user's saved plans (requires login)
+| POST | `/api/meal-plans` | Bearer JWT | Generate a weekly meal plan, expand recipe details, and cache it |
+| GET | `/api/meal-plans` | Bearer JWT | List the logged-in user's saved plans |
 
 
 ### Authentication

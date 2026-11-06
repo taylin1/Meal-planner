@@ -46,6 +46,17 @@ Canonical list: `server/.env.example`. Copy it to `server/.env` and fill in valu
 | `EDAMAM_APP_ID` / `EDAMAM_APP_KEY` | Edamam Meal Planner credentials |
 | `CLIENT_URL` | Must be the **client** origin (`http://localhost:5173`) |
 
+Client env vars live in `client/.env` (Vite, prefix `VITE_`) — template:
+`client/.env.example`:
+
+| Variable | Notes |
+|---|---|
+| `VITE_SUPABASE_URL` | Supabase project URL — public browser value |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key — public browser value |
+
+Never put `SUPABASE_SERVICE_ROLE_KEY` or Edamam credentials in a `VITE_` var; Vite
+inlines them into the bundle.
+
 `.env` is gitignored — never commit secrets.
 
 ## Gotchas
@@ -64,11 +75,12 @@ Canonical list: `server/.env.example`. Copy it to `server/.env` and fill in valu
 
 ## Known Incomplete — do not assume these work
 
-- **Recipe details are not wired up.** `attachRecipeDetails()` in
-  `server/src/routes/mealplans.js` is fully written but never called (marked "Phase 7"),
-  so `meal_plans.plan_data` stores raw Edamam `/select` output — recipe URIs, not recipes.
-- **The client is a placeholder.** `client/src/App.jsx` renders "Hello World".
-  `react-router-dom` and `@supabase/supabase-js` are installed on the client but unused.
+- **No dashboard route.** After a successful login or sign-up, `LoginPage.jsx` /
+  `SignUpPage.jsx` navigate to `/dashboard`, but `client/src/App.jsx` only defines
+  `/`, `/login`, and `/signup` — so users land on a blank page. There is no plan
+  builder or plan display UI yet.
+- **`attachRecipeDetails()` fetches sequentially.** It awaits each recipe link one at a
+  time inside nested loops, so a full week costs ~20+ serial HTTP calls to Edamam.
 - Per-meal calorie ranges and dish/meal-type filters are fixed defaults in
   `server/src/lib/mealPlanBuilder.js` — not user-configurable.
 
