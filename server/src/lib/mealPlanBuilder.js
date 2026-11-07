@@ -21,6 +21,73 @@ const MEAL_TYPES = {
   Dinner:    ['lunch/dinner']
 }
 
+// The only diets the app offers. "low-carb" is intentionally absent — Edamam
+// treats it as a diet label, not a health label, so it would be rejected.
+const HEALTH_LABELS = [
+  'vegetarian',
+  'vegan',
+  'keto-friendly',
+  'gluten-free',
+  'dairy-free',
+  'paleo',
+  'peanut-free'
+]
+
+const MEAL_NAMES = ['Breakfast', 'Lunch', 'Dinner']
+
+// Checks what React sent and returns only values we know Edamam accepts.
+// Returns { error } on bad input, or { value } with the cleaned choices.
+function parsePlanInput(body) {
+  const input = body || {}
+  const days = input.days
+  const meals = input.meals
+  const healthLabels = input.healthLabels
+
+  if (!Number.isInteger(days) || days < 1 || days > 7) {
+    return { error: 'Days must be a whole number from 1 to 7' }
+  }
+
+  if (!Array.isArray(meals) || meals.length === 0) {
+    return { error: 'Pick at least one meal: Breakfast, Lunch or Dinner' }
+  }
+
+  const cleanMeals = []
+
+  for (const meal of meals) {
+    if (!MEAL_NAMES.includes(meal)) {
+      return { error: 'One of those meals is not supported' }
+    }
+
+    if (cleanMeals.includes(meal)) {
+      return { error: 'Pick each meal only once' }
+    }
+
+    cleanMeals.push(meal)
+  }
+
+  if (healthLabels !== undefined && healthLabels !== null && !Array.isArray(healthLabels)) {
+    return { error: 'That diet is not supported' }
+  }
+
+  const cleanLabels = healthLabels || []
+
+  if (cleanLabels.length > 1) {
+    return { error: 'Pick one diet at a time' }
+  }
+
+  if (cleanLabels.length === 1 && !HEALTH_LABELS.includes(cleanLabels[0])) {
+    return { error: 'That diet is not supported' }
+  }
+
+  return {
+    value: {
+      days,
+      meals: cleanMeals,
+      healthLabels: cleanLabels.slice()
+    }
+  }
+}
+
 function buildMealPlanRequest({ days, meals, healthLabels }) {
 
   // Build each section dynamically based on which meals the user toggled on
@@ -63,4 +130,4 @@ function buildMealPlanRequest({ days, meals, healthLabels }) {
   return request
 }
 
-module.exports = { buildMealPlanRequest }
+module.exports = { buildMealPlanRequest, parsePlanInput, HEALTH_LABELS }

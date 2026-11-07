@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const supabase = require('../lib/supabaseClient.js')
 const { verifyToken } = require('../middleware/auth.js')
-const { buildMealPlanRequest } = require('../lib/mealPlanBuilder.js')
+const { buildMealPlanRequest, parsePlanInput } = require('../lib/mealPlanBuilder.js')
 
 const EDAMAM_APP_ID = process.env.EDAMAM_APP_ID
 const EDAMAM_APP_KEY = process.env.EDAMAM_APP_KEY
@@ -56,16 +56,18 @@ async function attachRecipeDetails(selectData) {
 
 router.post('/', verifyToken, async function (req, res) {
 
-  // Step 1 - Receive days, meals and healthLabels from React
-  const { days, meals, healthLabels } = req.body
+  // Step 1 - Check the days, meals and diet React sent us
+  const parsed = parsePlanInput(req.body)
 
-  // Step 2 - Validate the input
-  if (!days || !meals || meals.length === 0) {
-    return res.status(400).json({ error: 'days and at least one meal are required' })
+  // Step 2 - Stop before calling Edamam if the choices are invalid
+  if (parsed.error) {
+    return res.status(400).json({ error: parsed.error })
   }
 
+  const { days, meals, healthLabels } = parsed.value
+
   // Step 3 - Build the Edamam request body
-  const requestBody = buildMealPlanRequest({ days, meals, healthLabels: healthLabels || [] })
+  const requestBody = buildMealPlanRequest({ days, meals, healthLabels })
 
   try {
     // Step 4 - Call Edamam's select endpoint
@@ -107,7 +109,7 @@ router.post('/', verifyToken, async function (req, res) {
         user_id: req.user.id,
         days,
         meals_included: meals,
-        health_labels: healthLabels || [],
+        health_labels: healthLabels,
         plan_data: daysWithRecipes
       })
       .select()
@@ -140,6 +142,36 @@ router.get('/', verifyToken, async function (req, res) {
   }
 
   return res.status(200).json(plans)
+})
+
+// DELETE /api/meal-plans/:id - removes one of the logged-in user's plans
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+router.delete('/:id', verifyToken, async function (req, res) {
+  const id = req.params.id
+
+  // A malformed id would make Postgres throw, so reject it first
+  if (!UUID_PATTERN.test(id)) {
+    return res.status(400).json({ error: 'Invalid plan id' })
+  }
+
+  // Match on user_id as well so nobody can delete another user's plan
+  const { data: deletedPlans, error } = await supabase
+    .from('meal_plans')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', req.user.id)
+    .select('id')
+
+  if (error) {
+    return res.status(500).json({ error: 'Failed to delete meal plan' })
+  }
+
+  if (!deletedPlans || deletedPlans.length === 0) {
+    return res.status(404).json({ error: 'Plan not found' })
+  }
+
+  return res.status(204).send()
 })
 
 module.exports = router
