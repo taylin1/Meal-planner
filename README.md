@@ -3,10 +3,11 @@
 A full-stack meal planning app that generates weekly meal plans with the Edamam Meal
 Planner API, protected by Supabase-authenticated requests and cached in Supabase.
 
-> **Status — backend + auth UI.** `POST /api/meal-plans` works end to end and expands
-> each meal into full recipe details before saving. The client has sign-up and log-in
-> screens; the plan builder and plan display are not built yet. See
-> [docs/Architecture.md](docs/Architecture.md) for what exists.
+> **Status — dashboard plan builder.** `POST /api/meal-plans` works end to end and
+> expands each meal into full recipe details before saving. The client has sign-up and
+> log-in screens, plus a dashboard that generates plans and lists, views, and deletes
+> saved ones. The styled plan display (day tabs, calorie donut, recipe cards) is not
+> built yet. See [docs/Architecture.md](docs/Architecture.md) for what exists.
 
 
 ## Features
@@ -20,7 +21,9 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 | Client auth UI (sign up / log in) | ✅ working |
 | Client login/sign-up styling per docs/design.md + design-reference.png | ✅ working |
 | Dashboard navbar (logo, user name/email, log out) | ✅ working |
-| Client plan builder + plan display | 🚧 not implemented |
+| Client plan builder (days, meals, diet) | ✅ working |
+| Client saved plans (list, view, delete) | ✅ working |
+| Client plan display (day tabs, donut, recipe cards) | 🚧 not implemented |
 
 ## Prerequisites
 
@@ -53,8 +56,9 @@ cp client/.env.example client/.env
 ```
 
 and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (Supabase → Project
-Settings → API). Both are public values that ship in the browser bundle; never put the
-service role key or Edamam credentials in a `VITE_` variable.
+Settings → API), plus `VITE_API_URL` — the Express origin, which defaults to
+`http://localhost:3001` when unset. All `VITE_` values are public and ship in the
+browser bundle; never put the service role key or Edamam credentials in one.
 
 ### 3. Run
 
@@ -75,6 +79,7 @@ Open [http://localhost:5173](http://localhost:5173).
 | GET | `/health` | none | Health check — returns `{ status: "Okay!" }` |
 | POST | `/api/meal-plans` | Bearer JWT | Generate a weekly meal plan, expand recipe details, and cache it |
 | GET | `/api/meal-plans` | Bearer JWT | List the logged-in user's saved plans |
+| DELETE | `/api/meal-plans/:id` | Bearer JWT | Delete one of the logged-in user's plans |
 
 ### Usage notes
 
@@ -82,8 +87,9 @@ Open [http://localhost:5173](http://localhost:5173).
   protected by `ProtectedRoute` (verified Supabase session).
 - After a successful login, `LoginPage.jsx` navigates to `/dashboard`; `SignUpPage.jsx`
   sends the user to `/login`.
-- `/dashboard` renders the navbar (logo, user name/email, log out) plus a placeholder
-  welcome line; a real plan builder and plan display are not built yet.
+- `/dashboard` renders the navbar, a plan builder (1–7 days, Breakfast/Lunch/Dinner,
+  one optional diet), a plain generated-plan preview, and the saved plans list. The
+  styled day tabs, calorie donut, and recipe cards are not built yet.
 - Logging out from the navbar calls `supabase.auth.signOut()` and returns to `/login`.
 
 ### Authentication

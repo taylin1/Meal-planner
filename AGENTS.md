@@ -53,6 +53,7 @@ Client env vars live in `client/.env` (Vite, prefix `VITE_`) — template:
 |---|---|
 | `VITE_SUPABASE_URL` | Supabase project URL — public browser value |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key — public browser value |
+| `VITE_API_URL` | Express origin; unset falls back to `http://localhost:3001` |
 
 Never put `SUPABASE_SERVICE_ROLE_KEY` or Edamam credentials in a `VITE_` var; Vite
 inlines them into the bundle.
@@ -71,16 +72,17 @@ inlines them into the bundle.
 - Client (:5173) and server (:3001) run on **separate ports**.
 - Edamam API calls are **server-side only** — never expose API keys to the client.
 - No root `package.json` — `npm install` must be run in `client/` and `server/` separately.
-- **No client tests.** The server has Jest; `supertest` is installed but no test files exist yet.
+- **No client tests.** The server has Jest; `src/lib/mealPlanBuilder.test.js` and
+  `src/routes/mealplans.test.js` cover validation, generation, listing, and deletion.
 
 ## Known Incomplete — do not assume these work
 
-- **Dashboard is a placeholder.** `App.jsx` defines `/login`, `/signup`, and a protected
-  `/dashboard`; `/` redirects to `/login`. `LoginPage.jsx` navigates to `/dashboard`
-  after login, while `SignUpPage.jsx` sends users to `/login`. `Dashboard.jsx` renders
-  only the navbar (`Components/Navbar.jsx` — logo, user name/email, log out via
-  `supabase.auth.signOut()`) and "Welcome to the dashboard" — the plan builder and plan
-  display UI are not built yet.
+- **Plan display is still a placeholder.** `App.jsx` defines `/login`, `/signup`, and a
+  protected `/dashboard`; `/` redirects to `/login`. `LoginPage.jsx` navigates to
+  `/dashboard` after login, while `SignUpPage.jsx` sends users to `/login`.
+  `Dashboard.jsx` renders the navbar, `PlanBuilder`, a plain `PlanPreview` (day heading,
+  kcal total, meal name — no tabs, donut, or recipe cards), and `SavedPlans`. The styled
+  plan display (part 3) is not built yet.
 - **`attachRecipeDetails()` fetches sequentially.** It awaits each recipe link one at a
   time inside nested loops, so a full week costs ~20+ serial HTTP calls to Edamam.
 - Per-meal calorie ranges and dish/meal-type filters are fixed defaults in

@@ -7,11 +7,13 @@ conventions see [AGENTS.md](../AGENTS.md); for setup see [README.md](../README.m
 
 ```
 client/src/
-  App.jsx                 # Placeholder component ("Hello World")
+  App.jsx                 # Routes: /login, /signup, protected /dashboard
   main.jsx                # Entry point — mounts App into #root
   index.css               # Tailwind styles
   assets/                 # Static assets
-  lib/                    # Client utilities (empty)
+  Components/             # Navbar, PlanBuilder, PlanPreview, SavedPlans
+  Pages/                  # LoginPage, SignUpPage, Dashboard
+  lib/                    # Supabase client, meal-plans API, plan options
 
 server/src/
   index.js                # Entry point — dotenv, CORS, JSON parser, routes, /health
@@ -21,7 +23,7 @@ server/src/
   middleware/
     auth.js               # verifyToken — Supabase JWT check
   routes/
-    mealplans.js          # POST /api/meal-plans
+    mealplans.js          # POST / GET / DELETE /api/meal-plans
 ```
 
 ## Request Flow — `POST /api/meal-plans`
@@ -29,7 +31,9 @@ server/src/
 1. **Auth.** `verifyToken` (`middleware/auth.js`) reads `Authorization: Bearer <jwt>`,
    asks Supabase `auth.getUser(token)` who the token belongs to, and attaches the user
    to `req.user`. Missing or invalid token → `401`, and the handler never runs.
-2. **Parse.** The handler destructures `{ days, meals, healthLabels }` from the body.
+2. **Validate.** `parsePlanInput()` (`lib/mealPlanBuilder.js`) checks `days` (1–7),
+   `meals` (a non-empty subset of Breakfast/Lunch/Dinner), and `healthLabels` (at most
+   one, from a fixed allowlist). Bad input → `400` before Edamam is called.
 3. **Build.** `buildMealPlanRequest()` (`lib/mealPlanBuilder.js`) maps each selected meal
    to an Edamam section, applying fixed calorie ranges and dish/meal-type filters.
    Health labels are only sent when non-empty — an empty array makes Edamam reject
@@ -38,12 +42,14 @@ server/src/
    `https://api.edamam.com/api/meal-planner/v1/{APP_ID}/select` using HTTP Basic auth.
    A fixed `Edamam-Account-User` header is sent for every request because the free tier
    allows only 10 account users per month.
-5. **Cache.** A non-2xx response from Edamam becomes `502`. On success the plan is
-   inserted into `meal_plans` and returned as `201`.
-6. **Not implemented.** Step 6 of the handler — `attachRecipeDetails()` — would expand
-   each recipe URI into label, image, calories, ingredients, and source URL by fetching
-   `/recipes/v2` in parallel. The function is written but never called (the code marks it
-   "Phase 7"), so `plan_data` currently holds URIs rather than recipes.
+5. **Edamam errors.** A non-2xx response becomes `502`; an empty `selection` becomes
+   `422` with a "try different options" message.
+6. **Expand.** `attachRecipeDetails()` turns each select link into label, image,
+   per-serving calories, ingredients, and source URL, one request at a time.
+   `plan_data` stores that expanded shape as an array of `{ sections }`, one entry per
+   day in plan order.
+7. **Save.** The row is inserted into `meal_plans` with `user_id` and the requested
+   choices, then returned as `201`.
 
 ## Database
 
@@ -56,12 +62,12 @@ by design — the server has full admin access.
 | `days` | requested day count |
 | `meals_included` | requested meal names |
 | `health_labels` | requested labels (empty array when none) |
-| `plan_data` | raw Edamam `/select` response |
+| `plan_data` | expanded recipe details, one `{ sections }` entry per day |
 
 ## External Services
 
-- **Edamam Meal Planner v1** — `/select` only. The `/recipes/v2` lookups belong to the
-  unimplemented detail step. Credentials: `EDAMAM_APP_ID`, `EDAMAM_APP_KEY`.
+- **Edamam Meal Planner v1** — `/select` plus one recipe lookup per selected meal for
+  details. Credentials: `EDAMAM_APP_ID`, `EDAMAM_APP_KEY`.
 - **Supabase** — Postgres for storage plus Auth for token verification. The server
   disables `autoRefreshToken` and `persistSession` because it verifies other people's
   tokens rather than holding a session of its own.
@@ -73,5 +79,9 @@ one copy to keep current.
 
 ## Client
 
-Not built out yet. `App.jsx` renders a placeholder, and `react-router-dom` and
-`@supabase/supabase-js` are installed but not wired to anything.
+`App.jsx` wires `react-router-dom` (public `/login` and `/signup`, protected
+`/dashboard` via `ProtectedRoute`). `Dashboard.jsx` fetches the user's plans from
+`GET /api/meal-plans` and renders `PlanBuilder` (POSTs the choices), `PlanPreview`
+(the generated or viewed plan), and `SavedPlans` (view + delete).
+`lib/mealPlansApi.js` attaches the Supabase access token and turns non-2xx responses
+into errors the cards display.
