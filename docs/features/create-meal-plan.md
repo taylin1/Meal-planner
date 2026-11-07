@@ -45,7 +45,10 @@ In scope:
 - Saved plans list: fetch, title/subtitle, View, delete.
 
 Out of scope (part 3 and later):
-- Day tabs, calorie donut, recipe accordion, ingredients, images, "View full recipe".
+- Day tabs and the calorie donut.
+
+Added after the first build: recipe images, expandable ingredients, and a "View full
+recipe" link in `PlanPreview` — the detail view the View button needed.
 - Editing an existing plan, per-meal calorie ranges, user-configurable nutrition targets.
 - Parallelising `attachRecipeDetails()` (see Risks).
 - Any new dependency.
@@ -180,8 +183,10 @@ grid next to the preview; Saved plans full width below. Navbar is unchanged.
 - Title `Your plan`; right-side meta `${days} days` and the diet label or `No diet
   filter`.
 - Empty state: `Generate a plan or view a saved one.`
-- For each day: `Day N` heading, `N kcal` day total, then one row per meal with the
-  recipe label and `X kcal`. No tabs, donut, accordion, ingredients, or images.
+- For each day: `Day N` heading, `N kcal` day total, then one card per meal with the
+  image, meal name, recipe label, `X kcal per serving`, and a chevron that expands the
+  ingredient list plus `View full recipe`. Day 1's first meal starts expanded.
+- Day tabs and the calorie donut are still part 3.
 
 ### SavedPlans (callout 8)
 
@@ -192,7 +197,8 @@ grid next to the preview; Saved plans full width below. Navbar is unchanged.
   - otherwise `${days} days of ${meals_included.join(' and ').toLowerCase()}`
 - Subtitle: diet label or `No diet filter`, then `, created 4 Nov` from `created_at`
   (`day: 'numeric', month: 'short'`).
-- **View**: sets `selectedPlan`; outline-orange `rounded-full` button, `View` label.
+- **View**: sets `selectedPlan` and scrolls the preview into view; outline-orange
+  `rounded-full` button, `View` label.
 - **X**: gray circle, `aria-label="Delete plan"`; `window.confirm('Delete this plan?')`
   (no dialog library), then `DELETE`. Remove the row on success; if the deleted plan was
   selected, clear the preview. Show failures in the list's error line.

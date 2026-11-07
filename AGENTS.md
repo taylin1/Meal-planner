@@ -80,9 +80,9 @@ inlines them into the bundle.
 - **Plan display is still a placeholder.** `App.jsx` defines `/login`, `/signup`, and a
   protected `/dashboard`; `/` redirects to `/login`. `LoginPage.jsx` navigates to
   `/dashboard` after login, while `SignUpPage.jsx` sends users to `/login`.
-  `Dashboard.jsx` renders the navbar, `PlanBuilder`, a plain `PlanPreview` (day heading,
-  kcal total, meal name — no tabs, donut, or recipe cards), and `SavedPlans`. The styled
-  plan display (part 3) is not built yet.
+  `Dashboard.jsx` renders the navbar, `PlanBuilder`, `PlanPreview` (per-day meals with
+  image, kcal, expandable ingredients, and a full-recipe link), and `SavedPlans`. Day
+  tabs and the calorie donut are not built yet.
 - **`attachRecipeDetails()` fetches sequentially.** It awaits each recipe link one at a
   time inside nested loops, so a full week costs ~20+ serial HTTP calls to Edamam.
 - Per-meal calorie ranges and dish/meal-type filters are fixed defaults in

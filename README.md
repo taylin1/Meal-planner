@@ -6,8 +6,9 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 > **Status — dashboard plan builder.** `POST /api/meal-plans` works end to end and
 > expands each meal into full recipe details before saving. The client has sign-up and
 > log-in screens, plus a dashboard that generates plans and lists, views, and deletes
-> saved ones. The styled plan display (day tabs, calorie donut, recipe cards) is not
-> built yet. See [docs/Architecture.md](docs/Architecture.md) for what exists.
+> saved ones, with recipe images, expandable ingredients, and recipe links. The day tabs
+> and calorie donut are not built yet. See
+> [docs/Architecture.md](docs/Architecture.md) for what exists.
 
 
 ## Features
@@ -23,7 +24,8 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 | Dashboard navbar (logo, user name/email, log out) | ✅ working |
 | Client plan builder (days, meals, diet) | ✅ working |
 | Client saved plans (list, view, delete) | ✅ working |
-| Client plan display (day tabs, donut, recipe cards) | 🚧 not implemented |
+| Recipe detail cards (image, ingredients, full recipe link) | ✅ working |
+| Client plan display (day tabs, calorie donut) | 🚧 not implemented |
 
 ## Prerequisites
 
@@ -88,8 +90,9 @@ Open [http://localhost:5173](http://localhost:5173).
 - After a successful login, `LoginPage.jsx` navigates to `/dashboard`; `SignUpPage.jsx`
   sends the user to `/login`.
 - `/dashboard` renders the navbar, a plan builder (1–7 days, Breakfast/Lunch/Dinner,
-  one optional diet), a plain generated-plan preview, and the saved plans list. The
-  styled day tabs, calorie donut, and recipe cards are not built yet.
+  one optional diet), the plan preview (per-day meals with image, kcal, expandable
+  ingredients, and a recipe link), and the saved plans list. Day tabs and the calorie
+  donut are not built yet.
 - Logging out from the navbar calls `supabase.auth.signOut()` and returns to `/login`.
 
 ### Authentication
