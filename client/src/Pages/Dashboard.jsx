@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Navbar from '../Components/Navbar'
 import PlanBuilder from '../Components/PlanBuilder'
@@ -10,6 +10,8 @@ function Dashboard() {
   const [user, setUser] = useState(null)
   const [plans, setPlans] = useState([])
   const [selectedPlan, setSelectedPlan] = useState(null)
+  const [viewingSaved, setViewingSaved] = useState(false)
+  const previewRef = useRef(null)
   const [plansLoading, setPlansLoading] = useState(true)
   const [plansError, setPlansError] = useState('')
 
@@ -57,13 +59,33 @@ function Dashboard() {
     }
   }, [])
 
+  // Shows the plan in the preview and brings it into view, since the preview
+  // sits above the saved plans list
+  function showPlan(plan, fromSavedList) {
+    setSelectedPlan(plan)
+    setViewingSaved(fromSavedList)
+
+    window.requestAnimationFrame(function () {
+      const preview = previewRef.current
+
+      if (!preview) return
+
+      preview.focus({ preventScroll: true })
+      preview.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
+  function handleView(plan) {
+    showPlan(plan, true)
+  }
+
   async function handleGenerate(choices) {
     const plan = await generateMealPlan(choices)
 
     setPlans(function (current) {
       return [plan].concat(current)
     })
-    setSelectedPlan(plan)
+    showPlan(plan, false)
   }
 
   async function handleDelete(id) {
@@ -88,7 +110,11 @@ function Dashboard() {
         <main className="flex flex-col gap-6">
           <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
             <PlanBuilder onGenerate={handleGenerate} />
-            <PlanPreview plan={selectedPlan} />
+            <PlanPreview
+              ref={previewRef}
+              plan={selectedPlan}
+              viewingSaved={Boolean(selectedPlan) && viewingSaved}
+            />
           </div>
 
           <SavedPlans
@@ -96,7 +122,7 @@ function Dashboard() {
             loading={plansLoading}
             error={plansError}
             selectedPlanId={selectedPlan ? selectedPlan.id : ''}
-            onView={setSelectedPlan}
+            onView={handleView}
             onDelete={handleDelete}
           />
         </main>
