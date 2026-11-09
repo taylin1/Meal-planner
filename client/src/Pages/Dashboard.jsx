@@ -108,7 +108,7 @@ function Dashboard() {
         <Navbar user={user} />
 
         <main className="flex flex-col gap-6">
-          <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
             <PlanBuilder onGenerate={handleGenerate} />
             <PlanPreview
               ref={previewRef}
