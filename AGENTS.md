@@ -33,6 +33,9 @@ npm test          # Jest
 - **Tailwind CSS 4** — via `@tailwindcss/vite` plugin, not PostCSS
 - **Express 5** — not v4; async errors are caught automatically
 - **Supabase client** — always import from `server/src/lib/supabaseClient.js`
+- **Mobile-first layout** — the dashboard container is `mx-auto max-w-5xl px-4`. Full-bleed
+  sections (navbar, saved plans) use `-mx-4 sm:mx-0` inside it; the footer is
+  `w-screen max-w-full` so `100vw` cannot add a scrollbar.
 
 ## Environment Variables
 
@@ -74,15 +77,21 @@ inlines them into the bundle.
 - No root `package.json` — `npm install` must be run in `client/` and `server/` separately.
 - **No client tests.** The server has Jest; `src/lib/mealPlanBuilder.test.js` and
   `src/routes/mealplans.test.js` cover validation, generation, listing, and deletion.
+- **`minmax(0, …)` is load-bearing in the plan grid.** `Dashboard.jsx` uses
+  `grid grid-cols-1 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]`. Recipe titles use
+  `truncate` (`white-space: nowrap`), so an `auto`/`1fr` track is sized by the longest
+  dish name — the plan cards grew to roughly twice the page width and made the navbar
+  and saved plans look shrunken. Keep the `minmax(0, …)` and `grid-cols-1`.
 
 ## Known Incomplete — do not assume these work
 
-- **Plan display is still a placeholder.** `App.jsx` defines `/login`, `/signup`, and a
-  protected `/dashboard`; `/` redirects to `/login`. `LoginPage.jsx` navigates to
+- **Plan view has no day tabs or calorie donut.** `App.jsx` defines `/login`, `/signup`,
+  and a protected `/dashboard`; `/` redirects to `/login`. `LoginPage.jsx` navigates to
   `/dashboard` after login, while `SignUpPage.jsx` sends users to `/login`.
   `Dashboard.jsx` renders the navbar, `PlanBuilder`, `PlanPreview` (per-day meals with
-  image, kcal, expandable ingredients, and a full-recipe link), and `SavedPlans`. Day
-  tabs and the calorie donut are not built yet.
+  image, kcal, expandable ingredients, and a full-recipe link), and `SavedPlans`. Choosing
+  View in `SavedPlans` previews that plan above and scrolls it into view. Day tabs and the
+  calorie donut are not built yet.
 - **`attachRecipeDetails()` fetches sequentially.** It awaits each recipe link one at a
   time inside nested loops, so a full week costs ~20+ serial HTTP calls to Edamam.
 - Per-meal calorie ranges and dish/meal-type filters are fixed defaults in
@@ -93,5 +102,6 @@ inlines them into the bundle.
 - `README.md` — human-facing: overview, setup, API surface
 - `docs/Architecture.md` — directory layout, request flow, database schema
 - `docs/Deploy.md` — production topology, Render + Vercel config, deploy order
+- `client/vercel.json` — SPA rewrite so client routes survive a refresh on Vercel
 - `server/.env.example` — canonical environment variable list
 - `AGENTS.md` (this file) — commands, conventions, gotchas for agents

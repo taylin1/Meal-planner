@@ -25,6 +25,8 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 | Client plan builder (days, meals, diet) | ✅ working |
 | Client saved plans (list, view, delete) | ✅ working |
 | Recipe detail cards (image, ingredients, full recipe link) | ✅ working |
+| Responsive dashboard (one column on phones, builder beside plan on laptops) | ✅ working |
+| Footer (full width, author + current year, on every route) | ✅ working |
 | Client plan display (day tabs, calorie donut) | 🚧 not implemented |
 
 ## Prerequisites
@@ -92,7 +94,11 @@ Open [http://localhost:5173](http://localhost:5173).
 - `/dashboard` renders the navbar, a plan builder (1–7 days, Breakfast/Lunch/Dinner,
   one optional diet), the plan preview (per-day meals with image, kcal, expandable
   ingredients, and a recipe link), and the saved plans list. Day tabs and the calorie
-  donut are not built yet.
+  donut are not built yet. The dashboard is mobile-first: one column on phones, and from
+  `lg` a 380px builder column beside the plan. The navbar and Saved plans run
+  edge-to-edge on phones and become rounded cards from `sm`.
+- `<Footer />` renders on every route from `App.jsx` (outside `<Routes>`) and shows only
+  the author and the current year.
 - Logging out from the navbar calls `supabase.auth.signOut()` and returns to `/login`.
 
 ### Authentication
