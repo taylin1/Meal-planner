@@ -23,7 +23,7 @@ function SavedPlans({ plans, loading, error, selectedPlanId, onView, onDelete })
   }
 
   return (
-    <section className="rounded-3xl bg-white p-6 shadow-sm">
+    <section className="-mx-4 rounded-none bg-white p-5 shadow-sm sm:mx-0 sm:rounded-3xl sm:p-6">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Saved plans</h2>
         <span className="text-sm text-gray-500">Newest first</span>

@@ -36,8 +36,8 @@ function Navbar({ user }) {
   }
 
   return (
-    <header className="w-full">
-      <div className="mx-auto max-w-5xl rounded-2xl border border-gray-200 px-5 py-3 shadow-sm">
+    <header className="-mx-4 sm:mx-0">
+      <div className="mx-auto max-w-5xl border-y border-gray-200 px-5 py-3 shadow-sm sm:rounded-2xl sm:border-x">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-500">
