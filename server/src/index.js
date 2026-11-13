@@ -27,12 +27,12 @@ app.get('/health', (req, res) => {
     res.json({ status: "Okay!"});
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-})
-
 startModel().catch(function (err) {
     console.error('Failed to load Qvac model:', err)
+})
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 })
 
 module.exports = app;
