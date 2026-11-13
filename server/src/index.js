@@ -7,6 +7,8 @@ const cors = require('cors');
 const app = express();
 
 const mealPlansRoute = require('./routes/mealplans.js');
+const askQuestionRoute = require('./routes/askquestion.js')
+const { startModel } = require('./lib/qvacModel.js')
 
 // Define the port the server will listen on
 const PORT = process.env.PORT || 3001;
@@ -18,6 +20,7 @@ app.use(cors({
 app.use(express.json()); // Middleware to parse JSON request bodies
 
 app.use('/api/meal-plans', mealPlansRoute);
+app.use('/api/meal-plans', askQuestionRoute);
 
 // Health check endpoint to verify that the server is running
 app.get('/health', (req, res) => {
@@ -26,6 +29,10 @@ app.get('/health', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+})
+
+startModel().catch(function (err) {
+    console.error('Failed to load Qvac model:', err)
 })
 
 module.exports = app;

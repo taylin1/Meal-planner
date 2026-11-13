@@ -4,7 +4,9 @@ import Navbar from '../Components/Navbar'
 import PlanBuilder from '../Components/PlanBuilder'
 import PlanPreview from '../Components/PlanPreview'
 import SavedPlans from '../Components/SavedPlans'
-import { fetchMealPlans, generateMealPlan, deleteMealPlan } from '../lib/mealPlansApi'
+import QuestionBar from '../Components/QuestionBar'
+import DisplayAnswer from '../Components/DisplayAnswer'
+import { fetchMealPlans, generateMealPlan, deleteMealPlan, askQuestion } from '../lib/mealPlansApi'
 
 function Dashboard() {
   const [user, setUser] = useState(null)
@@ -14,6 +16,9 @@ function Dashboard() {
   const previewRef = useRef(null)
   const [plansLoading, setPlansLoading] = useState(true)
   const [plansError, setPlansError] = useState('')
+  const [answer, setAnswer] = useState('')
+  const [answerLoading, setAnswerLoading] = useState(false)
+  const [answerError, setAnswerError] = useState('')
 
   useEffect(function () {
     let active = true
@@ -102,6 +107,21 @@ function Dashboard() {
     })
   }
 
+  async function handleAsk(question) {
+    setAnswer('')
+    setAnswerError('')
+    setAnswerLoading(true)
+
+    try {
+      const result = await askQuestion(question)
+      setAnswer(result.answer)
+    } catch (err) {
+      setAnswerError(err.message)
+    } finally {
+      setAnswerLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6">
@@ -115,6 +135,11 @@ function Dashboard() {
               plan={selectedPlan}
               viewingSaved={Boolean(selectedPlan) && viewingSaved}
             />
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+            <QuestionBar onAsk={handleAsk} loading={answerLoading} />
+            <DisplayAnswer answer={answer} loading={answerLoading} error={answerError} />
           </div>
 
           <SavedPlans
