@@ -19,6 +19,7 @@ function Dashboard() {
   const [answer, setAnswer] = useState('')
   const [answerLoading, setAnswerLoading] = useState(false)
   const [answerError, setAnswerError] = useState('')
+  const hideQvac = import.meta.env.VITE_HIDE_QVAC === 'true'
 
   useEffect(function () {
     let active = true
@@ -137,10 +138,12 @@ function Dashboard() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
-            <QuestionBar onAsk={handleAsk} loading={answerLoading} />
-            <DisplayAnswer answer={answer} loading={answerLoading} error={answerError} />
-          </div>
+          {hideQvac ? null : (
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+              <QuestionBar onAsk={handleAsk} loading={answerLoading} />
+              <DisplayAnswer answer={answer} loading={answerLoading} error={answerError} />
+            </div>
+          )}
 
           <SavedPlans
             plans={plans}

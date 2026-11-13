@@ -28,6 +28,7 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 | Responsive dashboard (one column on phones, builder beside plan on laptops) | ✅ working |
 | Footer (full width, author + current year, on every route) | ✅ working |
 | Client plan display (day tabs, calorie donut) | 🚧 not implemented |
+| Qvac text generation (ask food/health questions, get AI answer) | ✅ working |
 
 ## Prerequisites
 
@@ -106,6 +107,22 @@ Open [http://localhost:5173](http://localhost:5173).
 `POST /api/meal-plans` requires a valid Supabase JWT in the
 `Authorization: Bearer <token>` header. Tokens are verified server-side against
 Supabase; requests with a missing or invalid token get `401`.
+
+### Qvac text generation
+
+`POST /api/meal-plans/ask` requires a valid Supabase JWT in the
+`Authorization: Bearer <token>` header. The question must be food- or health-related
+(as determined by a whole-word keyword topic guard). Returns `200` with a generated
+answer from the local Qvac model, or `503` if the model is still loading, or `400`
+if the question is off-topic. The model (Qwen3 0.6B Q4_0 GGUF) runs on the server CPU
+and appends `/no_think` to skip the reasoning block, delivering answers in ~2s on
+CPU instead of ~17s.
+
+- Auth: Bearer JWT from Supabase session
+- Input: `{ question: '...' }`
+- Output: `{ answer: '...' }`
+- 503 while model warms up (eliminated by loading model before server start, per ADR-005)
+- 400 for off-topic questions (weather, politics, etc.)
 
 ## Project Docs
 

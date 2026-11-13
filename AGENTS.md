@@ -83,6 +83,13 @@ inlines them into the bundle.
   dish name — the plan cards grew to roughly twice the page width and made the navbar
   and saved plans look shrunken. Keep the `minmax(0, …)` and `grid-cols-1`.
 
+- **Qvac model loading:** `startModel()` in `server/src/index.js` now runs **before**
+  `app.listen()`. This eliminates the 503 "Model is still loading" window that
+  appeared immediately after deployment (Render ephemeral filesystem requires a full
+  model re-download). The model loads first, then the server starts accepting
+  `/ask` requests once ready. If the model takes too long, the server defers /ask
+  responses until loading completes. See ADR-005 in `docs/descisions.md`.
+
 ## Known Incomplete — do not assume these work
 
 - **Plan view has no day tabs or calorie donut.** `App.jsx` defines `/login`, `/signup`,
