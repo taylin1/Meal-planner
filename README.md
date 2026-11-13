@@ -28,13 +28,14 @@ Planner API, protected by Supabase-authenticated requests and cached in Supabase
 | Responsive dashboard (one column on phones, builder beside plan on laptops) | ✅ working |
 | Footer (full width, author + current year, on every route) | ✅ working |
 | Client plan display (day tabs, calorie donut) | 🚧 not implemented |
-| Qvac text generation (ask food/health questions, get AI answer) | ✅ working |
+| In-browser AI answers (ask food/health questions, get AI answer offline) | ✅ working |
 
 ## Prerequisites
 
 - Node.js 18+ (global `fetch`, used for the Edamam calls, requires 18+; 20+ recommended)
 - A [Supabase](https://supabase.com) project (database + auth)
 - An [Edamam](https://developer.edamam.com) developer account
+- Chrome or Edge for the ask bar (the model runs locally and needs WebGPU)
 
 ## Quick Start
 
@@ -108,21 +109,21 @@ Open [http://localhost:5173](http://localhost:5173).
 `Authorization: Bearer <token>` header. Tokens are verified server-side against
 Supabase; requests with a missing or invalid token get `401`.
 
-### Qvac text generation
+### In-browser AI answers
 
-`POST /api/meal-plans/ask` requires a valid Supabase JWT in the
-`Authorization: Bearer <token>` header. The question must be food- or health-related
-(as determined by a whole-word keyword topic guard). Returns `200` with a generated
-answer from the local Qvac model, or `503` if the model is still loading, or `400`
-if the question is off-topic. The model (Qwen3 0.6B Q4_0 GGUF) runs on the server CPU
-and appends `/no_think` to skip the reasoning block, delivering answers in ~2s on
-CPU instead of ~17s.
+The ask bar has no API endpoint. `client/src/lib/qvacModel.js` loads
+`Qwen3-0.6B-q4f16_1-MLC` with WebLLM inside a Web Worker, so the question never leaves
+the browser. The model needs **WebGPU** (Chrome/Edge) and downloads about 350 MB of
+weights the first time; the browser caches them, and later visits work offline.
 
-- Auth: Bearer JWT from Supabase session
-- Input: `{ question: '...' }`
-- Output: `{ answer: '...' }`
-- 503 while model warms up (eliminated by loading model before server start, per ADR-005)
-- 400 for off-topic questions (weather, politics, etc.)
+- First food/health question waits for the model to load; the card shows progress
+- Questions must be food- or health-related (whole-word keyword topic guard in
+  `client/src/lib/foodHealthGuard.js`), otherwise the ask card shows
+  "Please ask a food or health related question."
+- Off-topic and empty-answer errors render in the existing answer card
+- Set `VITE_HIDE_QVAC=true` to hide the ask bar, or `VITE_QVAC_MODEL_ID` to pick a
+  different WebLLM model
+- No server model, no weights on Render, no `503` model-loading errors
 
 ## Project Docs
 

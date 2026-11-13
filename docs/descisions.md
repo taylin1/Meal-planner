@@ -18,7 +18,7 @@ Default to 1 serving if yield is missing.
 ## ADR-005: Load Qvac model before starting the HTTP server
 
 **Date:** 2026-11-13
-**Status:** Accepted
+**Status:** Superseded by ADR-006
 
 **Context:**
 The Qvac model (Qwen3 0.6B GGUF) takes ~40s to load from disk on CPU.
@@ -41,3 +41,31 @@ questions until loading completes.
   listening), but this is a one-time cost at boot, not per-request.
 - Negative: If the model fails to load, the server starts in a degraded state
   where `/ask` always returns 503 until the process is restarted.
+
+## ADR-006: Run the Qwen3 model in the browser with WebLLM
+
+**Date:** 2026-11-14
+**Status:** Accepted — supersedes ADR-005
+
+**Context:**
+The Qvac model could not be deployed: Render has no room for ~380 MB of weights plus
+1.6 GB of SDK/native addons, so the ask bar was hidden in `Dashboard.jsx`. The
+`@qvac/sdk` cannot run in a browser (it spawns a Bare worker and loads a native
+llama.cpp addon), so "move it to the frontend" cannot keep the Qvac runtime.
+
+**Decision:**
+Run the same Qwen3 0.6B family in the browser with **WebLLM**
+(`@mlc-ai/web-llm`) using `Qwen3-0.6B-q4f16_1-MLC`. Inference lives in a Web Worker
+(`client/src/lib/qvacWorker.js`), the model is fetched once from Hugging Face and
+cached by the browser, and the server loses the model, the `/ask` route, its tests,
+and the `@qvac/sdk` dependency. The topic guard, system prompt and `/no_think`
+behaviour move to `client/src/lib/` unchanged.
+
+**Consequences:**
+- Positive: no model weights or model runtime on Render, so deploys fit and startup
+  is fast; ADR-005's 503 window disappears with the endpoint.
+- Positive: works offline after the first load; questions never leave the browser.
+- Negative: requires WebGPU (Chrome/Edge) — other browsers get a load error.
+- Negative: first load downloads ~350 MB, and answers are slower than the CPU server
+  run on low-end GPUs.
+- Negative: each browser profile caches its own copy; clearing site data re-downloads.

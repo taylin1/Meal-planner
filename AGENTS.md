@@ -57,6 +57,8 @@ Client env vars live in `client/.env` (Vite, prefix `VITE_`) — template:
 | `VITE_SUPABASE_URL` | Supabase project URL — public browser value |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key — public browser value |
 | `VITE_API_URL` | Express origin; unset falls back to `http://localhost:3001` |
+| `VITE_QVAC_MODEL_ID` | Optional WebLLM model id; defaults to `Qwen3-0.6B-q4f16_1-MLC` |
+| `VITE_HIDE_QVAC` | Set to `true` to hide `QuestionBar` and `DisplayAnswer` entirely |
 
 Never put `SUPABASE_SERVICE_ROLE_KEY` or Edamam credentials in a `VITE_` var; Vite
 inlines them into the bundle.
@@ -73,6 +75,10 @@ inlines them into the bundle.
   other import for this reason: `lib/supabaseClient.js` throws at import time when its
   env vars are missing, so it must never be required before dotenv has run.
 - Client (:5173) and server (:3001) run on **separate ports**.
+- **Express 5 reports listen failures through the callback.** `app.listen(PORT, (error) => …)`
+  in `server/src/index.js` receives `EADDRINUSE` instead of throwing it, so a busy
+  `:3001` (usually a stale `node` process) must be checked explicitly — otherwise the
+  log says "running" and the process exits 0.
 - Edamam API calls are **server-side only** — never expose API keys to the client.
 - No root `package.json` — `npm install` must be run in `client/` and `server/` separately.
 - **No client tests.** The server has Jest; `src/lib/mealPlanBuilder.test.js` and
@@ -83,12 +89,16 @@ inlines them into the bundle.
   dish name — the plan cards grew to roughly twice the page width and made the navbar
   and saved plans look shrunken. Keep the `minmax(0, …)` and `grid-cols-1`.
 
-- **Qvac model loading:** `startModel()` in `server/src/index.js` now runs **before**
-  `app.listen()`. This eliminates the 503 "Model is still loading" window that
-  appeared immediately after deployment (Render ephemeral filesystem requires a full
-  model re-download). The model loads first, then the server starts accepting
-  `/ask` requests once ready. If the model takes too long, the server defers /ask
-  responses until loading completes. See ADR-005 in `docs/descisions.md`.
+- **The Qwen3 model runs in the browser, not on the server.** `client/src/lib/qvacModel.js`
+  loads `Qwen3-0.6B-q4f16_1-MLC` through WebLLM inside a Web Worker
+  (`client/src/lib/qvacWorker.js`). WebGPU is required (Chrome/Edge); the ~350 MB of
+  weights are downloaded once from Hugging Face and cached by the browser, so later
+  loads work offline. The server has no model, no `/ask` route, and no `@qvac/sdk`
+  dependency. `/no_think` plus `enable_thinking: false` keeps answers short and fast.
+  See ADR-006 in `docs/descisions.md`.
+- **The ask bar needs a secure origin.** WebGPU and the model cache require HTTPS (or
+  localhost). On an unsupported browser the ask card shows a "could not load" message
+  instead of an answer.
 
 ## Known Incomplete — do not assume these work
 

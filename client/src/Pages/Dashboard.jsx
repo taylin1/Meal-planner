@@ -6,7 +6,8 @@ import PlanPreview from '../Components/PlanPreview'
 import SavedPlans from '../Components/SavedPlans'
 import QuestionBar from '../Components/QuestionBar'
 import DisplayAnswer from '../Components/DisplayAnswer'
-import { fetchMealPlans, generateMealPlan, deleteMealPlan, askQuestion } from '../lib/mealPlansApi'
+import { fetchMealPlans, generateMealPlan, deleteMealPlan } from '../lib/mealPlansApi'
+import { askQuestion, loadQvacModel } from '../lib/qvacModel'
 
 function Dashboard() {
   const [user, setUser] = useState(null)
@@ -20,6 +21,30 @@ function Dashboard() {
   const [answerLoading, setAnswerLoading] = useState(false)
   const [answerError, setAnswerError] = useState('')
   const hideQvac = import.meta.env.VITE_HIDE_QVAC === 'true'
+  const [modelStatus, setModelStatus] = useState(hideQvac ? 'ready' : 'loading')
+  const [modelProgress, setModelProgress] = useState(0)
+
+  // Downloads the weights on first visit and reuses the browser cache after
+  // that, so the question bar works offline once the model has been saved.
+  useEffect(function () {
+    if (hideQvac) return
+
+    let active = true
+
+    loadQvacModel(function (report) {
+      if (active) setModelProgress(report.progress)
+    })
+      .then(function () {
+        if (active) setModelStatus('ready')
+      })
+      .catch(function () {
+        if (active) setModelStatus('error')
+      })
+
+    return function () {
+      active = false
+    }
+  }, [hideQvac])
 
   useEffect(function () {
     let active = true
@@ -140,7 +165,12 @@ function Dashboard() {
 
           {hideQvac ? null : (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
-              <QuestionBar onAsk={handleAsk} loading={answerLoading} />
+              <QuestionBar
+                onAsk={handleAsk}
+                loading={answerLoading}
+                modelStatus={modelStatus}
+                modelProgress={modelProgress}
+              />
               <DisplayAnswer answer={answer} loading={answerLoading} error={answerError} />
             </div>
           )}

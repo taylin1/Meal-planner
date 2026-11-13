@@ -7,8 +7,6 @@ const cors = require('cors');
 const app = express();
 
 const mealPlansRoute = require('./routes/mealplans.js');
-const askQuestionRoute = require('./routes/askquestion.js')
-const { startModel } = require('./lib/qvacModel.js')
 
 // Define the port the server will listen on
 const PORT = process.env.PORT || 3001;
@@ -20,18 +18,19 @@ app.use(cors({
 app.use(express.json()); // Middleware to parse JSON request bodies
 
 app.use('/api/meal-plans', mealPlansRoute);
-app.use('/api/meal-plans', askQuestionRoute);
 
 // Health check endpoint to verify that the server is running
 app.get('/health', (req, res) => {
     res.json({ status: "Okay!"});
 });
 
-startModel().catch(function (err) {
-    console.error('Failed to load Qvac model:', err)
-})
-
-app.listen(PORT, () => {
+app.listen(PORT, (error) => {
+    // Express 5 passes a listen failure (e.g. EADDRINUSE) to this callback
+    // instead of throwing, so check it or the log lies about the server.
+    if (error) {
+        console.error(`Could not start server on port ${PORT}: ${error.message}`);
+        process.exit(1);
+    }
     console.log(`Server is running on port ${PORT}`);
 })
 

@@ -1,12 +1,13 @@
 import { useState } from 'react'
 
-function QuestionBar({ onAsk, loading }) {
+function QuestionBar({ onAsk, loading, modelStatus, modelProgress }) {
   const [question, setQuestion] = useState('')
+  const modelReady = modelStatus === 'ready'
 
   function handleSubmit(event) {
     event.preventDefault()
     const trimmed = question.trim()
-    if (!trimmed || loading) return
+    if (!trimmed || loading || !modelReady) return
     onAsk(trimmed)
   }
 
@@ -16,11 +17,26 @@ function QuestionBar({ onAsk, loading }) {
     }
   }
 
+  // Reuses the existing subtitle line, so the card layout stays unchanged.
+  function statusText() {
+    if (modelStatus === 'loading') {
+      return modelProgress > 0
+        ? 'Loading model… ' + Math.round(modelProgress * 100) + '%'
+        : 'Preparing the model…'
+    }
+
+    if (modelStatus === 'error') {
+      return 'The model could not load. WebGPU is required — try Chrome or Edge.'
+    }
+
+    return 'Food and health questions only'
+  }
+
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm flex flex-col gap-4">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Ask a question</h2>
-        <p className="text-sm text-gray-500 mt-1">Food and health questions only</p>
+        <p className="text-sm text-gray-500 mt-1">{statusText()}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -36,7 +52,7 @@ function QuestionBar({ onAsk, loading }) {
 
         <button
           type="submit"
-          disabled={loading || !question.trim()}
+          disabled={loading || !modelReady || !question.trim()}
           className="bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full px-6 py-2 text-sm font-medium transition-colors self-start"
         >
           {loading ? 'Asking…' : 'Ask'}

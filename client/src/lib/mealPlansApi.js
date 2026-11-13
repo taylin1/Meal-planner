@@ -60,11 +60,3 @@ export async function fetchMealPlans() {
 export async function deleteMealPlan(id) {
   await callApi('/api/meal-plans/' + id, { method: 'DELETE' })
 }
-
-export async function askQuestion(question) {
-  const response = await callApi('/api/meal-plans/ask', {
-    method: 'POST',
-    body: JSON.stringify({ question })
-  })
-  return response.json()
-}
