@@ -7,7 +7,7 @@ import SavedPlans from '../Components/SavedPlans'
 import QuestionBar from '../Components/QuestionBar'
 import DisplayAnswer from '../Components/DisplayAnswer'
 import { fetchMealPlans, generateMealPlan, deleteMealPlan } from '../lib/mealPlansApi'
-import { askQuestion, loadQvacModel } from '../lib/qvacModel'
+import { askQuestion, startAi, getAiStatus } from '../ai/aiEngine'
 
 function Dashboard() {
   const [user, setUser] = useState(null)
@@ -21,25 +21,23 @@ function Dashboard() {
   const [answerLoading, setAnswerLoading] = useState(false)
   const [answerError, setAnswerError] = useState('')
   const hideQvac = import.meta.env.VITE_HIDE_QVAC === 'true'
-  const [modelStatus, setModelStatus] = useState(hideQvac ? 'ready' : 'loading')
+  // 'loading', 'webgpu', 'cpu' or 'none'. When it ends on 'none' the ask card
+  // is simply not rendered and the rest of the page works as usual.
+  const [modelStatus, setModelStatus] = useState(hideQvac ? 'none' : 'loading')
   const [modelProgress, setModelProgress] = useState(0)
 
-  // Downloads the weights on first visit and reuses the browser cache after
-  // that, so the question bar works offline once the model has been saved.
+  // Starts the cooking helper in the background on first visit. The weights
+  // are cached by the browser after that, so it works offline later.
   useEffect(function () {
     if (hideQvac) return
 
     let active = true
 
-    loadQvacModel(function (report) {
+    startAi(function (report) {
       if (active) setModelProgress(report.progress)
+    }).then(function () {
+      if (active) setModelStatus(getAiStatus())
     })
-      .then(function () {
-        if (active) setModelStatus('ready')
-      })
-      .catch(function () {
-        if (active) setModelStatus('error')
-      })
 
     return function () {
       active = false
@@ -163,7 +161,7 @@ function Dashboard() {
             />
           </div>
 
-          {hideQvac ? null : (
+          {hideQvac || modelStatus === 'none' ? null : (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
               <QuestionBar
                 onAsk={handleAsk}

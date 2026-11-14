@@ -21,8 +21,11 @@ function DisplayAnswer({ answer, loading, error }) {
 
   if (answer) {
     return (
-      <div className="bg-white rounded-3xl p-6 shadow-sm">
+      <div className="bg-white rounded-3xl p-6 shadow-sm flex flex-col gap-3">
         <p className="text-sm text-gray-900 leading-relaxed">{answer}</p>
+        <p className="text-xs text-gray-400">
+          AI-generated, please double-check cooking times and allergy information.
+        </p>
       </div>
     )
   }

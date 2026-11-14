@@ -111,18 +111,26 @@ Supabase; requests with a missing or invalid token get `401`.
 
 ### In-browser AI answers
 
-The ask bar has no API endpoint. `client/src/lib/qvacModel.js` loads
-`Qwen3-0.6B-q4f16_1-MLC` with WebLLM inside a Web Worker, so the question never leaves
-the browser. The model needs **WebGPU** (Chrome/Edge) and downloads about 350 MB of
-weights the first time; the browser caches them, and later visits work offline.
+The ask bar has no API endpoint, and the question never leaves the browser.
+`client/src/ai/aiEngine.js` picks one of two engines for the same
+`Qwen3 0.6B` model:
 
-- First food/health question waits for the model to load; the card shows progress
-- Questions must be food- or health-related (whole-word keyword topic guard in
-  `client/src/lib/foodHealthGuard.js`), otherwise the ask card shows
-  "Please ask a food or health related question."
+- **WebLLM on the GPU** (`client/src/ai/webllmEngine.js`) when the browser has usable
+  WebGPU (Chrome/Edge). Uses `Qwen3-0.6B-q4f16_1-MLC`, about 350 MB of weights.
+- **wllama on the CPU** (`client/src/ai/wllamaEngine.js`) through WebAssembly when there
+  is no WebGPU or the GPU load fails. Uses the Q4_K_M GGUF of the same model, about
+  484 MB. Slower, but works on far more devices.
+
+The browser caches whichever weights were downloaded, so later visits work offline.
+If both engines fail, the ask card is hidden and the rest of the page works normally.
+
+- First food/health question waits for the weights to load; the card shows progress
+- Questions must be food- or health-related when no meal is attached (whole-word
+  keyword topic guard in `client/src/ai/foodHealthGuard.js`), otherwise the ask card
+  shows "Please ask a food or health related question."
 - Off-topic and empty-answer errors render in the existing answer card
-- Set `VITE_HIDE_QVAC=true` to hide the ask bar, or `VITE_QVAC_MODEL_ID` to pick a
-  different WebLLM model
+- Set `VITE_HIDE_QVAC=true` to hide the ask bar, `VITE_QVAC_MODEL_ID` to pick a
+  different WebLLM model, or `VITE_WLLAMA_MODEL_URL` to pick a different GGUF
 - No server model, no weights on Render, no `503` model-loading errors
 
 ## Project Docs

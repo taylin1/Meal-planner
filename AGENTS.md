@@ -58,6 +58,7 @@ Client env vars live in `client/.env` (Vite, prefix `VITE_`) — template:
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key — public browser value |
 | `VITE_API_URL` | Express origin; unset falls back to `http://localhost:3001` |
 | `VITE_QVAC_MODEL_ID` | Optional WebLLM model id; defaults to `Qwen3-0.6B-q4f16_1-MLC` |
+| `VITE_WLLAMA_MODEL_URL` | Optional GGUF URL for the CPU engine; defaults to bartowski `Qwen_Qwen3-0.6B-Q4_K_M.gguf` |
 | `VITE_HIDE_QVAC` | Set to `true` to hide `QuestionBar` and `DisplayAnswer` entirely |
 
 Never put `SUPABASE_SERVICE_ROLE_KEY` or Edamam credentials in a `VITE_` var; Vite
@@ -89,16 +90,25 @@ inlines them into the bundle.
   dish name — the plan cards grew to roughly twice the page width and made the navbar
   and saved plans look shrunken. Keep the `minmax(0, …)` and `grid-cols-1`.
 
-- **The Qwen3 model runs in the browser, not on the server.** `client/src/lib/qvacModel.js`
-  loads `Qwen3-0.6B-q4f16_1-MLC` through WebLLM inside a Web Worker
-  (`client/src/lib/qvacWorker.js`). WebGPU is required (Chrome/Edge); the ~350 MB of
-  weights are downloaded once from Hugging Face and cached by the browser, so later
-  loads work offline. The server has no model, no `/ask` route, and no `@qvac/sdk`
-  dependency. `/no_think` plus `enable_thinking: false` keeps answers short and fast.
-  See ADR-006 in `docs/descisions.md`.
-- **The ask bar needs a secure origin.** WebGPU and the model cache require HTTPS (or
-  localhost). On an unsupported browser the ask card shows a "could not load" message
-  instead of an answer.
+- **The Qwen3 model runs in the browser, not on the server, and has two engines.**
+  `client/src/ai/aiEngine.js` picks one: WebLLM on WebGPU (`webllmEngine.js`,
+  `Qwen3-0.6B-q4f16_1-MLC` in a Web Worker) and wllama on the CPU
+  (`wllamaEngine.js`, Qwen3 0.6B Q4_K_M GGUF through WebAssembly). WebLLM falls back to
+  wllama when the GPU load throws; if both fail the status is `none` and the ask card is
+  not rendered. Only one engine's weights are ever downloaded, both are behind dynamic
+  `import()`, and repeated `startAi()` calls reuse the same promise. The server has no
+  model, no `/ask` route, and no `@qvac/sdk` dependency. `/no_think` plus
+  `enable_thinking: false` keeps answers short and fast. See
+  `docs/features/cpu-fallback.md` and ADR-006 in `docs/descisions.md`.
+- **No COOP/COEP headers on the client, on purpose.** Multi-threaded wllama needs
+  `SharedArrayBuffer`, which needs cross-origin isolation, but `COEP: require-corp`
+  blocks the cross-origin Edamam recipe images (their CDN sends no CORP/CORS headers).
+  So wllama runs single-threaded and the code logs a console note when
+  `crossOriginIsolated` is false. Do not add the headers without moving recipe images
+  behind a proxy first.
+- **The ask bar needs a secure origin.** WebGPU and both model caches need HTTPS (or
+  localhost). On a device where no engine loads, the ask card is hidden and the rest of
+  the page works normally.
 
 ## Known Incomplete — do not assume these work
 

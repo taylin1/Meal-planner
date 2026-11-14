@@ -12,6 +12,7 @@
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.88",
     "@supabase/supabase-js": "^2.116.0",
+    "@wllama/wllama": "3.13.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3"

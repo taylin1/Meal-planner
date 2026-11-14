@@ -37,16 +37,20 @@ server/src/
 
 1. **QuestionBar** (`client/src/Components/QuestionBar.jsx`) captures the user's input
    and calls `Dashboard.handleAsk(question)`. Ask stays disabled until the model is ready.
-2. **Topic guard** (`client/src/lib/foodHealthGuard.js`) tests the question against a
+2. **Topic guard** (`client/src/ai/foodHealthGuard.js`) tests the question against a
    whole-word food/health keyword list (`FOOD_HEALTH_PATTERN`). Non-food questions
    (e.g. weather, politics) throw "Please ask a food or health related question.".
-3. **Model load** (`client/src/lib/qvacModel.js`) creates one WebLLM engine for the tab
-   with `Qwen3-0.6B-q4f16_1-MLC`. `hasModelInCache()` decides whether this is a first
-   download or a cached load, and `initProgressCallback` drives the percentage shown in
-   the ask card.
-4. **Inference** runs in `client/src/lib/qvacWorker.js`, so the page never freezes.
-   The prompt keeps the same system message and appends `/no_think`; the request also
-   sets `enable_thinking: false`.
+   The guard is skipped when a meal is attached, since the meal gives the context.
+3. **Engine choice** (`client/src/ai/aiEngine.js`) starts one engine for the tab.
+   `navigator.gpu.requestAdapter()` decides between WebLLM (`webllmEngine.js`, model
+   `Qwen3-0.6B-q4f16_1-MLC`) and wllama on the CPU (`wllamaEngine.js`, Qwen3 0.6B
+   Q4_K_M GGUF). A failed WebLLM load falls back to wllama; if both fail the ask card
+   is hidden. `hasModelInCache()` and the wllama download callback drive the
+   percentage shown in the ask card.
+4. **Inference** runs in `client/src/ai/qvacWorker.js` for WebLLM and in wllama's own
+   worker for the CPU path, so the page never freezes. Both engines receive the same
+   messages from `promptHelpers.js`, which appends `/no_think`; WebLLM also sets
+   `enable_thinking: false` and wllama passes `chat_template_kwargs`.
 5. **Answer.** Thinking tags are stripped and an empty reply throws. `DisplayAnswer`
    renders the text in its existing card, or shows the error card.
 
@@ -99,5 +103,5 @@ one copy to keep current.
 `GET /api/meal-plans` and renders `PlanBuilder` (POSTs the choices), `PlanPreview`
 (the generated or viewed plan), and `SavedPlans` (view + delete).
 `lib/mealPlansApi.js` attaches the Supabase access token and turns non-2xx responses
-into errors the cards display. `lib/qvacModel.js` loads and runs the Qwen3 model in a
-Web Worker, so the ask bar needs no server endpoint.
+into errors the cards display. `ai/aiEngine.js` loads and runs the Qwen3 model through
+WebLLM or wllama, so the ask bar needs no server endpoint.
