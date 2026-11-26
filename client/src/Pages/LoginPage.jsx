@@ -17,6 +17,21 @@ function LoginPage (){
     setPassword(e.target.value)
   }
 
+  async function handleGuestLogin(){
+   setErrorMessage('');
+    setLoading(true);
+
+    const {error} = await supabase.auth.signInWithPassword({email:'test@gmail.com', password:'123456'});
+
+    if(error){
+      setErrorMessage(error.message);
+      setLoading(false);
+    }
+  
+    navigate('/dashboard');
+   
+  }
+
   async function handleLogin(){
     setErrorMessage('');
     setLoading(true);
@@ -79,6 +94,20 @@ function LoginPage (){
           Don't have an account?{' '}
           <Link to="/signup" className="text-orange-500 hover:text-orange-600 font-medium">Sign up</Link>
         </p>
+
+
+  <div style={{ textAlign: 'center', margin: '15px 0' }}>or</div>
+
+  {/* One-Click Guest Access */}
+  <button 
+    type="button" 
+    disabled={loading}
+    onClick={handleGuestLogin}
+    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300 py-2.5 px-4 rounded-md font-semibold transition-colors cursor-pointer"
+  >
+     Explore as Guest (1-Click)
+  </button>
+
       </div>
       </div>
   )
