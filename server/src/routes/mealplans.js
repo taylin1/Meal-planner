@@ -101,7 +101,21 @@ router.post('/', verifyToken, async function (req, res) {
 
     // Step 6 - Swap the links for the real recipes
     const daysWithRecipes = await attachRecipeDetails(selectData)
-
+     
+    //If User is in Guest mode dont save to Database
+      if (req.user.email === 'demo@mealplanner.com') {
+      return res.status(201).json({
+        id: 'demo-temp-' + Date.now(),
+        user_id: req.user.id,
+        days,
+        meals_included: meals,
+        health_labels: healthLabels,
+        plan_data: daysWithRecipes,
+        created_at: new Date().toISOString(),
+        isDemo: true
+      })
+    }
+   
     // Step 7 - Save the complete plan to Supabase
     const { data: savedPlan, error: dbError } = await supabase
       .from('meal_plans')
