@@ -103,7 +103,7 @@ router.post('/', verifyToken, async function (req, res) {
     const daysWithRecipes = await attachRecipeDetails(selectData)
      
     //If User is in Guest mode dont save to Database
-      if (req.user.email === 'demo@mealplanner.com') {
+      if (req.user.email === 'test@gmail.com') {
       return res.status(201).json({
         id: 'demo-temp-' + Date.now(),
         user_id: req.user.id,
